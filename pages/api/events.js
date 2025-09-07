@@ -1,9 +1,11 @@
 import dbConnect from "../../lib/dbConnect";
 import Event from "../../models/Event";
+import User from "../../models/User"; // <--- Important
 import { verifyToken } from "../../lib/auth";
 import mongoose from "mongoose";
 
 export default async function handler(req, res) {
+  console.log("Incoming my-events API request"); // <--- should appear
   await dbConnect();
   const { method, query } = req;
   const { id, action } = query;
@@ -32,6 +34,7 @@ if (method === "GET") {
     // -------- CREATE EVENT --------
     if (method === "POST" && !action) {
       const user = verifyToken(req);
+      console.log("Decoded user after verifyToken():", user);
       if (!user) return res.status(401).json({ success: false, error: "Unauthorized" });
 
       const event = await Event.create({ ...req.body, createdBy: user.id });
@@ -91,32 +94,7 @@ if (method === "DELETE" && id) {
       await event.save();
       return res.status(200).json({ success: true, data: event });
     }
-
         
-// -------- MY EVENTS --------
-if (method === "GET" && action === "my-events") {
-  const user = verifyToken(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: "Unauthorized" });
-  }
-
-  try {
-    const events = await Event.find({})
-      .populate("attendees", "name email")
-      .populate("createdBy", "name email");
-
-    // filter manually (same logic as edit/delete checks)
-    const myEvents = events.filter(
-      (event) => event.createdBy.toString() === user.id
-    );
-
-    return res.status(200).json({ success: true, data: myEvents });
-  } catch (err) {
-    console.error("Fetch my-events error:", err);
-    return res.status(500).json({ success: false, error: "Server error" });
-  }
-}
-
 
     // If method not handled
     res.setHeader("Allow", ["GET", "POST", "PATCH", "DELETE"]);

@@ -12,21 +12,22 @@ export default function HomePage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
 
-  // Fetch all events once (public)
-  useEffect(() => {
-    const fetchEvents = async () => {
-      if (events.length === 0) {
-        try {
-          const res = await fetch("/api/events"); // Public GET
-          const data = await res.json();
-          if (data.success) setEvents(data.data);
-        } catch (err) {
-          console.error("Error fetching events:", err);
-        }
-      }
-    };
-    fetchEvents();
-  }, [events.length, setEvents]);
+useEffect(() => {
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch("/api/events"); // public API
+      const data = await res.json();
+      if (data.success) setEvents(data.data);
+      else console.error("Fetch events failed:", data.error);
+    } catch (err) {
+      console.error("Error fetching events:", err);
+    }
+  };
+
+  // Fetch events only if store has none
+  if (events.length === 0) fetchEvents();
+}, [events.length, setEvents]);
+
 
   // Filter events based on search/category
   useEffect(() => {
